@@ -12,7 +12,17 @@ class MemoryGame {
         this.timerInterval = null;
         this.totalPairs = 8; // 4x4 grid
         
-        this.emojis = ['🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼'];
+        // image paths for the cards
+        this.cardImages = [
+            'images/m1.jpg',
+            'images/m2.jpeg', 
+            'images/m3.png',
+            'images/m4.jpeg',
+            'images/m5.jpeg',
+            'images/m6.jpeg',
+            'images/m7.jpeg',
+            'images/m8.png'
+        ];
         
         this.init();
     }
@@ -74,14 +84,46 @@ class MemoryGame {
         gameBoard.innerHTML = '';
         
         // Create card pairs
-        const cardValues = [...this.emojis, ...this.emojis];
+        const cardValues = [...this.cardImages, ...this.cardImages];
         this.shuffleArray(cardValues);
+        
+        // Preload images to ensure they're available
+        this.preloadImages();
         
         this.cards = [];
         cardValues.forEach((value, index) => {
             const card = this.createCard(value, index);
             this.cards.push(card);
             gameBoard.appendChild(card);
+        });
+    }
+    
+    preloadImages() {
+        this.cardImages.forEach((imagePath) => {
+            const img = new Image();
+            img.onload = () => {
+                console.log('Preloaded image successfully:', imagePath);
+            };
+            img.onerror = () => {
+                console.error('Failed to preload image:', imagePath);
+                // Special debugging for m5.jpeg
+                if (imagePath.includes('m5.jpeg')) {
+                    console.error('m5.jpeg failed to load. Checking file...');
+                    // Try to fetch the file directly
+                    fetch(imagePath)
+                        .then(response => {
+                            console.log('m5.jpeg fetch response:', response.status, response.statusText);
+                            return response.blob();
+                        })
+                        .then(blob => {
+                            console.log('m5.jpeg blob size:', blob.size);
+                        })
+                        .catch(error => {
+                            console.error('m5.jpeg fetch error:', error);
+                        });
+                }
+            };
+            img.src = imagePath;
         });
     }
     
@@ -109,7 +151,34 @@ class MemoryGame {
         }
         
         card.classList.add('flipped');
-        card.textContent = card.dataset.value;
+        
+        // Create and display image
+        const img = document.createElement('img');
+        img.src = card.dataset.value;
+        img.alt = 'Card Image';
+        img.className = 'card-image';
+        
+        console.log('Attempting to load image:', card.dataset.value);
+        
+        // Add error handling for image loading
+        img.onerror = () => {
+            console.error('Failed to load image:', card.dataset.value);
+            // Fallback to text if image fails to load
+            card.innerHTML = '<span style="font-size: 2rem; color: white;">❌</span>';
+        };
+        
+        // Add load success logging
+        img.onload = () => {
+            console.log('Image loaded successfully:', card.dataset.value, {
+                naturalWidth: img.naturalWidth,
+                naturalHeight: img.naturalHeight,
+                complete: img.complete
+            });
+        };
+        
+        // Clear card content and add image
+        card.innerHTML = '';
+        card.appendChild(img);
         
         this.flippedCards.push(card);
         
@@ -151,8 +220,8 @@ class MemoryGame {
         setTimeout(() => {
             card1.classList.remove('flipped');
             card2.classList.remove('flipped');
-            card1.textContent = '';
-            card2.textContent = '';
+            card1.innerHTML = '';
+            card2.innerHTML = '';
         }, 1000);
         
         this.flippedCards = [];

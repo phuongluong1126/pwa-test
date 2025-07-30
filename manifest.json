@@ -1,7 +1,7 @@
 {
-  "name": "Memory Card Game",
-  "short_name": "Memory Game",
-  "description": "A fun memory card matching game with beautiful animations and offline support",
+  "name": "Meme Memory Game",
+  "short_name": "Meme Memory",
+  "description": "A hilarious meme memory card matching game with beautiful animations and offline support",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#667eea",
@@ -30,20 +30,6 @@
           "sizes": "128x128"
         }
             ]
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "screenshots/icon.png",
-      "sizes": "1280x720",
-      "type": "image/png",
-      "form_factor": "wide"
-    },
-    {
-      "src": "screenshots/icon.png",
-      "sizes": "390x844",
-      "type": "image/png",
-      "form_factor": "narrow"
     }
   ]
 } 
