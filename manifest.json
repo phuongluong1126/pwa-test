@@ -1,0 +1,49 @@
+{
+  "name": "Memory Card Game",
+  "short_name": "Memory Game",
+  "description": "A fun memory card matching game with beautiful animations and offline support",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#4CAF50",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "lang": "en",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "icons/icon128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Game",
+      "short_name": "New Game",
+      "description": "Start a new memory game",
+      "url": "/?action=new-game",
+      "icons": [
+        {
+          "src": "icons/icon128.png",
+          "sizes": "128x128"
+        }
+            ]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "screenshots/icon.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    },
+    {
+      "src": "screenshots/icon.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ]
+} 
