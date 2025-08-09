@@ -26,21 +26,30 @@ body {
 /* Header */
 .header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 18px;
     background: rgba(255, 255, 255, 0.95);
-    padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-    backdrop-filter: blur(10px);
+    padding: 10px 0 10px 0;
+    border-radius: 12px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    backdrop-filter: blur(8px);
 }
 
 .header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 15px;
+    font-size: 1.5rem;
+    margin-bottom: 8px;
     background: linear-gradient(45deg, #667eea, #764ba2);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+}
+
+.level-display {
+    font-size: 1.2rem;
+    font-weight: bold;
+    margin-bottom: 6px;
+    color: #764ba2;
+    letter-spacing: 1px;
+    text-shadow: 0 1px 4px rgba(118, 75, 162, 0.10);
 }
 
 .stats {

@@ -1,6 +1,13 @@
 // Memory Game PWA
 class MemoryGame {
     constructor() {
+        this.baseLevels = [
+            { gridSize: 2, pairs: 2 }, // Level 1: 2x2, 2 pairs
+            { gridSize: 3, pairs: 3 }, // Level 2: 3x2, 3 pairs
+            { gridSize: 4, pairs: 4 }, // Level 3: 4x2, 4 pairs
+            { gridSize: 4, pairs: 5 }  // Level 4: 4x3, 5 pairs
+        ];
+        this.currentLevel = 0;
         this.cards = [];
         this.flippedCards = [];
         this.matchedPairs = 0;
@@ -10,10 +17,9 @@ class MemoryGame {
         this.gamePaused = false;
         this.startTime = null;
         this.timerInterval = null;
-        this.totalPairs = 8; // 4x4 grid
-        
-        // image paths for the cards
-        this.cardImages = [
+        this.totalPairs = this.getPairsForLevel(this.currentLevel);
+        // Default local images as fallback
+        this.localImages = [
             'images/m1.jpg',
             'images/m2.jpeg', 
             'images/m3.png',
@@ -23,15 +29,18 @@ class MemoryGame {
             'images/m7.jpeg',
             'images/m8.png'
         ];
-        
+        this.cardImages = [...this.localImages];
         this.init();
     }
     
-    init() {
+    async init() {
+        await this.fetchMemes();
+        this.totalPairs = this.getPairsForLevel(this.currentLevel);
         this.registerServiceWorker();
         this.setupEventListeners();
         this.createGame();
         this.updateDisplay();
+        this.updateLevelDisplay && this.updateLevelDisplay();
     }
     
     registerServiceWorker() {
@@ -63,6 +72,23 @@ class MemoryGame {
             this.newGame();
         });
         
+        // Next Level button
+        const nextLevelBtn = document.getElementById('next-level-btn');
+        if (nextLevelBtn) {
+            nextLevelBtn.addEventListener('click', () => {
+                this.nextLevel();
+                document.getElementById('win-modal').classList.remove('active');
+            });
+        }
+        // Restart Level button
+        const restartLevelBtn = document.getElementById('restart-level-btn');
+        if (restartLevelBtn) {
+            restartLevelBtn.addEventListener('click', () => {
+                this.restartLevel();
+                document.getElementById('win-modal').classList.remove('active');
+            });
+        }
+        
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
@@ -79,23 +105,47 @@ class MemoryGame {
         });
     }
     
+    async fetchMemes() {
+        try {
+            const response = await fetch('https://api.imgflip.com/get_memes');
+            const data = await response.json();
+            if (data.success && data.data && data.data.memes) {
+                // Use only the image URLs
+                this.cardImages = data.data.memes.map(meme => meme.url);
+            } else {
+                this.cardImages = [...this.localImages];
+            }
+        } catch (e) {
+            console.error('Failed to fetch memes from API, using local images.', e);
+            this.cardImages = [...this.localImages];
+        }
+    }
+    
     createGame() {
+        this.totalPairs = this.getPairsForLevel(this.currentLevel);
+        const gridSize = this.getGridSizeForLevel(this.currentLevel);
         const gameBoard = document.getElementById('game-board');
         gameBoard.innerHTML = '';
-        
-        // Create card pairs
-        const cardValues = [...this.cardImages, ...this.cardImages];
+        // Randomly select images for this level
+        let cardImagesForLevel = [];
+        if (this.cardImages.length >= this.totalPairs) {
+            cardImagesForLevel = this.getRandomUniqueItems(this.cardImages, this.totalPairs);
+        } else {
+            // Not enough unique images, repeat images as needed
+            const repeats = Math.ceil(this.totalPairs / this.cardImages.length);
+            cardImagesForLevel = Array(repeats).fill(this.cardImages).flat().slice(0, this.totalPairs);
+        }
+        const cardValues = [...cardImagesForLevel, ...cardImagesForLevel];
         this.shuffleArray(cardValues);
-        
-        // Preload images to ensure they're available
         this.preloadImages();
-        
         this.cards = [];
         cardValues.forEach((value, index) => {
             const card = this.createCard(value, index);
             this.cards.push(card);
             gameBoard.appendChild(card);
         });
+        // Adjust grid style for level
+        gameBoard.style.gridTemplateColumns = `repeat(${gridSize}, 1fr)`;
     }
     
     preloadImages() {
@@ -293,24 +343,26 @@ class MemoryGame {
     endGame() {
         this.stopTimer();
         const finalTime = this.getElapsedTime();
-        
         // Calculate bonus score based on time and moves
         const timeBonus = Math.max(0, 300 - finalTime) * 10;
         const moveBonus = Math.max(0, 50 - this.moves) * 20;
         this.score += timeBonus + moveBonus;
-        
         // Update final stats
         document.getElementById('final-moves').textContent = this.moves;
         document.getElementById('final-time').textContent = this.formatTime(finalTime);
         document.getElementById('final-score').textContent = this.score;
-        
         // Show win modal
         setTimeout(() => {
             document.getElementById('win-modal').classList.add('active');
         }, 1000);
-        
         // Save high score
         this.saveHighScore();
+        // Show next level button if not last level
+        if (this.currentLevel < this.baseLevels.length - 1) {
+            document.getElementById('next-level-btn').style.display = 'inline-block';
+        } else {
+            document.getElementById('next-level-btn').style.display = 'none';
+        }
     }
     
     newGame() {
@@ -319,6 +371,7 @@ class MemoryGame {
         this.updateDisplay();
         document.getElementById('win-modal').classList.remove('active');
         document.getElementById('game-overlay').classList.remove('active');
+        this.updateLevelDisplay && this.updateLevelDisplay();
     }
     
     resetGame() {
@@ -352,6 +405,48 @@ class MemoryGame {
     
     getHighScore() {
         return localStorage.getItem('memoryGameHighScore') || 0;
+    }
+
+    getPairsForLevel(level) {
+        if (level < this.baseLevels.length) {
+            return this.baseLevels[level].pairs;
+        } else {
+            // Endless: each new level increases pairs by 1
+            return this.baseLevels[this.baseLevels.length - 1].pairs + (level - this.baseLevels.length + 1);
+        }
+    }
+    getGridSizeForLevel(level) {
+        if (level < this.baseLevels.length) {
+            return this.baseLevels[level].gridSize;
+        } else {
+            // For endless, grid size increases every 2 pairs, capped at 8
+            return Math.min(8, 2 + Math.floor(this.getPairsForLevel(level) / 2));
+        }
+    }
+
+    nextLevel() {
+        this.currentLevel++;
+        this.newGame();
+    }
+    restartLevel() {
+        this.newGame();
+    }
+    updateLevelDisplay() {
+        const levelDisplay = document.getElementById('level-display');
+        if (levelDisplay) {
+            levelDisplay.textContent = `Level ${this.currentLevel + 1} (${this.getPairsForLevel(this.currentLevel)} pairs)`;
+        }
+    }
+
+    // Utility to get N random unique items from an array
+    getRandomUniqueItems(array, n) {
+        const arr = array.slice();
+        const result = [];
+        for (let i = 0; i < n && arr.length > 0; i++) {
+            const idx = Math.floor(Math.random() * arr.length);
+            result.push(arr.splice(idx, 1)[0]);
+        }
+        return result;
     }
 }
 
